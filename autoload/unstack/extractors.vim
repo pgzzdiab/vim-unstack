@@ -5,12 +5,24 @@ function! unstack#extractors#Regex(regex, file_replacement, line_replacement, ..
         \ "line_replacement": a:line_replacement, "reverse": (a:0 > 0) ? a:1 : 0}
   function extractor.extract(text) dict
     let stack = []
+    " echo a:text
+    " echo '----------------------'
+    " echo '----------------------'
+    " let lst = []
+    " let lineno = substitute(a:text, self.regex, self.line_replacement, '\=add(lst, submatch(0))', 'g')
+    " echo lst
+    " echo lineno
+    let fname_bef = ''
+    let lineno_bef = ''
     for line in split(a:text, "\n")
       let fname = substitute(line, self.regex, self.file_replacement, '')
-      "if this line has a matching filename
+      let crt_line = substitute(line, '(?!  File)^\s+(\w+)\n', '\1', '')
       if (fname != line)
         let lineno = substitute(line, self.regex, self.line_replacement, '')
-        call add(stack, [fname, lineno])
+        let fname_bef = fname
+        let lineno_bef = lineno
+      else
+        call add(stack, [fname_bef, lineno_bef, crt_line])
       endif
     endfor
     if self.reverse
@@ -24,27 +36,8 @@ endfunction
 "}}}
 
 function! unstack#extractors#GetDefaults()
-  "I'm writing this as multiple statemnts because vim line continuations make
-  "me cry
   let extractors = []
-  "Python
   call add(extractors, unstack#extractors#Regex('\v^ *File "([^"]+)", line ([0-9]+).*', '\1', '\2'))
-  "Ruby
-  call add(extractors, unstack#extractors#Regex('\v^[ \t]*from (.+):([0-9]+):in `.*', '\1', '\2'))
-  "C#
-  call add(extractors, unstack#extractors#Regex('\v^[ \t]*at .*\(.*\) in (.+):line ([0-9]+) *$', '\1', '\2'))
-  "Perl
-  call add(extractors, unstack#extractors#Regex('\v^%(Trace begun|.+ called) at (.+) line (\d+)$', '\1', '\2'))
-  " Go
-  call add(extractors, unstack#extractors#Regex('\v^[ \t]*(.+):(\d+) \+0x\x+$', '\1', '\2'))
-  " Node.js
-  call add(extractors, unstack#extractors#Regex('\v^ +at .+\((.+):(\d+):\d+\)$', '\1', '\2'))
-  " Erlang R15+
-  call add(extractors, unstack#extractors#Regex('\v^.+\[\{file,"([^"]+)"\},\{line,([0-9]+)\}\]\}.*$', '\1', '\2'))
-  " Valgrind
-  call add(extractors, unstack#extractors#Regex('\v^\=\=\d+\=\=[ \t]*%(at|by).*\((.+):(\d+)\)$', '\1', '\2', 1))
-  " GDB / LLDB
-  call add(extractors, unstack#extractors#Regex('\v^[ *]*%(frame )?#\d+:? +0[xX][0-9a-fA-F]+ .+ at (.+):(\d+)', '\1', '\2', 1))
   return extractors
 endfunction
 

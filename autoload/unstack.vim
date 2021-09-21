@@ -7,7 +7,7 @@ endif
 augroup unstack_sign_clear
   autocmd!
   autocmd TabEnter * call unstack#RemoveSignsFromClosedTabs()
-augroup end 
+augroup end
 "}}}
 "unstack#Unstack(selection_type) called by hotkeys {{{
 function! unstack#Unstack(selection_type)
@@ -113,7 +113,7 @@ function! unstack#GetSelectedText(selection_type)
 endfunction
 "}}}
 "unstack#ExtractFilesFromText(stacktrace) extract files and lines from a stacktrace {{{
-"return [[file1, line1], [file2, line2] ... ] from a stacktrace 
+"return [[file1, line1], [file2, line2] ... ] from a stacktrace
 "tries each extractor in order and stops when an extractor returns a non-empty
 "stack
 function! unstack#ExtractFilesFromText(text)
@@ -130,8 +130,8 @@ endfunction
 "unstack#PopulateQuickfix(stack) set quickfix list to extracted files{{{
 function! unstack#PopulateQuickfix(stack)
   let qflist = []
-  for [filepath, lineno] in a:stack
-    call add(qflist, {"filename": filepath, "lnum": lineno})
+  for [filepath, lineno, text] in a:stack
+    call add(qflist, {"filename": filepath, "lnum": lineno, "text": text})
   endfor
   call setqflist(qflist)
 endfunction
@@ -157,7 +157,7 @@ function! unstack#OpenStackTrace(files)
     let old_scrolloff = &scrolloff
     let &scrolloff = g:unstack_scrolloff
   endif
-  for [filepath, lineno] in a:files
+  for [filepath, lineno, text] in a:files
     if filereadable(filepath) || (match(filepath, "://") > -1)
       execute "edit" filepath
       call unstack#MoveToLine(lineno)
@@ -188,7 +188,7 @@ function! unstack#GetOpenTabIds()
   let open_tab_ids = []
   tabdo if exists('t:unstack_tabId') | call add(open_tab_ids, string(t:unstack_tabId)) | endif
   "jump back to prev. tab
-  execute "tabnext" curTab 
+  execute "tabnext" curTab
   return open_tab_ids
 endfunction
 "}}}
